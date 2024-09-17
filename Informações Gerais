@@ -1,0 +1,39 @@
+*   Endereço com as versões do chrome, chromedriver e chrome-headless-shell, para baixar, conforme necessidade:
+https://googlechromelabs.github.io/chrome-for-testing/known-good-versions-with-downloads.json
+
+* Githubs sobre o assunto
+https://github.com/GoogleChromeLabs/chrome-for-testing#json-api-endpoints
+https://github.com/ericson-j-santos/pythonProject/tree/master
+
+*   Como Fazer uma Automação Web Utilizando o Python e o Selenium
+https://www.youtube.com/watch?v=8AMNaVt0z_M
+---------------------------------------------------------------------------------------
+*   Instruções para usar no GoogleColab
+!pip install Selenium
+!apt-get update # to update ubuntu to correctly run apt install
+!apt install chromium-chromedriver
+!cp /usr/lib/chromium-browser/chromedriver /usr/bin
+
+import sys
+sys.path.insert(0,'/usr/lib/chromium-browser/chromedriver')
+
+from selenium import webdriver
+chrome_options = webdriver.ChromeOptions()
+chrome_options.add_argument('--headless')
+chrome_options.add_argument('--no-sandbox')
+chrome_options.add_argument('--disable-dev-shm-usage')
+wd = webdriver.Chrome('chromedriver',options=chrome_options)
+
+wd.get("https://www.hashtagtreinamentos.com")
+print(wd.title)
+
+---------------------------------------------------------------------------------------
+
+from selenium import webdriver
+
+# As duas formas abaixo dá certo, desde que a versao do chromedriver seja a mesma versao que a do chrome - ainda que seja de teste;
+# navegador = webdriver.Chrome(r'C:\Users\erics\Downloads\120.0.6099.109\chrome-win64 120.0.6099.109\chrome-win64\chrome.exe') - o site nao abriu
+# Na forma abaixo o site abriu;
+navegador = webdriver.Chrome(r'C:\Users\erics\Downloads\120.0.6099.109\chromedriver-win64 120.0.6099.109\chromedriver-win64\chromedriver')
+
+navegador.get("https://vuetifyjs.com/en/components/date-pickers/#usage")
