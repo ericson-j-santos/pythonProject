@@ -37,3 +37,25 @@ from selenium import webdriver
 navegador = webdriver.Chrome(r'C:\Users\erics\Downloads\120.0.6099.109\chromedriver-win64 120.0.6099.109\chromedriver-win64\chromedriver')
 
 navegador.get("https://vuetifyjs.com/en/components/date-pickers/#usage")
+
+------------------------------------------------------------------------------
+
+Código VBA que executa o executavel python
+
+Sub ExecutarPythonExe()
+    Dim caminho_executavel As String
+    Dim resultado As Double
+
+    ' Caminho completo do executável gerado pelo PyInstaller
+    caminho_executavel = "C:\Users\erics\PycharmProjects\pythonProject\dist\testeComEmpacotador.exe"  ' Altere para o caminho correto do seu arquivo executável
+
+    ' Executa o arquivo .exe
+    resultado = Shell(caminho_executavel, vbNormalFocus)
+
+    ' Verifica se a execução foi bem-sucedida
+    If resultado <> 0 Then
+        MsgBox "O programa foi executado com sucesso!", vbInformation
+    Else
+        MsgBox "Houve um erro ao tentar executar o programa.", vbCritical
+    End If
+End Sub
