@@ -1,5 +1,6 @@
 import os
 import shutil
+import sys
 from selenium import webdriver
 from tkinter import messagebox, Tk
 
@@ -9,6 +10,13 @@ def exibir_alerta(mensagem):
     root.withdraw()  # Esconde a janela principal do tkinter
     messagebox.showerror("Erro", mensagem)
     root.destroy()  # Fecha a janela tkinter após o alerta
+
+# Função para exibir uma mensagem de sucesso em um alerta
+def exibir_sucesso(mensagem):
+    root = Tk()
+    root.withdraw() # Esconde a janela principal do tkinter
+    messagebox.showinfo("Sucesso", mensagem)
+    root.destroy() # Fecha a janela tkinter após o alerta
 
 # Função para copiar o chromedriver para a pasta destino se não existir
 def copiar_chromedriver(origem, destino):
@@ -39,6 +47,12 @@ try:
     # Se o chromedriver não estiver na pasta, copia-o do projeto
     if not os.path.exists(chromedriver_path):
         copiar_chromedriver(chromedriver_embutido, chromedriver_path)
+        # Mostra mensagem de sucesso quando o chromedriver é configurado pela primeira vez
+        exibir_sucesso("ChromeDriver Configurado com Sucesso.")
+    else:
+        # Se já está configurado, exibe uma mensagem e encerra a execução
+        exibir_sucesso("ChromeDriver já estava configurado. Execução não necessária.")
+        sys.exit() # Termina o script se o ChromeDriver já estava configurado
 
     # Inicializa o WebDriver
     navegador = webdriver.Chrome(executable_path=chromedriver_path)
@@ -47,6 +61,9 @@ try:
     navegador.get("https://www.google.com")
     print("Navegador foi aberto com sucesso.")
     navegador.quit()
+
+    # Mostra Mensagem de sucesso após abrir o navegador
+    exibir_sucesso("Navegador Aberto com Sucesso.")
 
 except Exception as e:
     # Mostra o alerta com a mensagem de erro
