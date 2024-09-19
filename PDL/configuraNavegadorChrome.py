@@ -68,3 +68,5 @@ try:
 except Exception as e:
     # Mostra o alerta com a mensagem de erro
     exibir_alerta(f"Ocorreu um erro: {str(e)}")
+
+# pyinstaller --onefile --add-data "resources;resources" scriptPython.py
