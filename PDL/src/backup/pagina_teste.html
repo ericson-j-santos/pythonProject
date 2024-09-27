@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste de Automação com Selenium</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f2f2f2;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+        }
+        .container {
+            background-color: #ffffff;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            border-radius: 8px;
+            width: 400px;
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .input-group {
+            margin-bottom: 15px;
+        }
+        .input-group label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        .input-group input,
+        .input-group select,
+        .input-group button {
+            width: 100%;
+            padding: 10px;
+            font-size: 16px;
+            border: 1px solid #cccccc;
+            border-radius: 4px;
+        }
+        .input-group button {
+            background-color: #007bff;
+            color: white;
+            cursor: pointer;
+        }
+        .input-group button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Automação com Selenium</h1>
+
+        <!-- Campo de login -->
+        <div class="input-group">
+            <label for="login">Usuário:</label>
+            <input type="text" id="login" placeholder="Digite seu nome de usuário">
+        </div>
+
+        <!-- Botão de login -->
+        <div class="input-group">
+            <button id="botaoLogin">Login</button>
+        </div>
+
+        <!-- Mensagem para código de verificação -->
+        <div class="input-group">
+            <label>Código de verificação:</label>
+            <input type="text" id="codigoVerificacao" placeholder="Digite o código de verificação">
+        </div>
+
+        <!-- Menu após login -->
+        <div class="input-group">
+            <label for="Menu">Menu:</label>
+            <input type="text" id="Menu" placeholder="Digite o menu desejado">
+        </div>
+
+        <!-- Campo de número de contrato -->
+        <div class="input-group">
+            <label for="numero-contrato">Número do Contrato:</label>
+            <input type="text" id="numero-contrato" placeholder="Digite o número do contrato">
+        </div>
+
+        <!-- Campo de tipo de liquidação -->
+        <div class="input-group">
+            <label for="CodigoTipoLiquidacao">Tipo de Liquidação:</label>
+            <select id="CodigoTipoLiquidacao">
+                <option value="">Selecione um tipo</option>
+                <option value="1">Liquidação Normal</option>
+                <option value="2">Liquidação Por Portabilidade</option>
+            </select>
+        </div>
+
+        <!-- Campo de data de referência -->
+        <div class="input-group">
+            <label for="DataReferencia">Data de Referência:</label>
+            <input type="date" id="DataReferencia">
+        </div>
+
+        <!-- Botão de consulta -->
+        <div class="input-group">
+            <button id="opcCON">Consultar</button>
+        </div>
+
+        <!-- Campo de resultado de valor da dívida -->
+        <div class="input-group">
+            <label for="valorDividaLiquidacao">Valor da Dívida:</label>
+            <input type="text" id="valorDividaLiquidacao" value="12345.67" readonly>
+        </div>
+    </div>
+
+    <script>
+        // Simulação de eventos para fins de teste
+        document.getElementById('botaoLogin').onclick = function() {
+            alert("Login realizado com sucesso! Insira o código de verificação.");
+        };
+
+        document.getElementById('opcCON').onclick = function() {
+            alert("Consulta realizada com sucesso! Valor da dívida: " + document.getElementById('valorDividaLiquidacao').value);
+        };
+    </script>
+</body>
+</html>
