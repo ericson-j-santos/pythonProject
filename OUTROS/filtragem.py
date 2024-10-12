@@ -4,6 +4,9 @@ from bs4 import BeautifulSoup
 import time
 import os
 import random
+import pickle
+from concurrent.futures import ThreadPoolExecutor, as_completed
+
 
 # Função para carregar os resultados do arquivo Excel
 def carregar_resultados_do_excel(arquivo_excel):
@@ -20,6 +23,7 @@ def carregar_resultados_do_excel(arquivo_excel):
         print(f"Arquivo {arquivo_excel} não encontrado.")
         return []
 
+
 # Função para baixar a página e salvar em arquivo local com retries e random User-Agent
 def baixar_pagina(link, arquivo_destino, tentativas=3):
     user_agents = [
@@ -29,16 +33,11 @@ def baixar_pagina(link, arquivo_destino, tentativas=3):
         "Mozilla/5.0 (iPhone; CPU iPhone OS 14_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.0 Mobile/15E148 Safari/604.1",
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.75 Safari/537.36"
     ]
-    proxies = {
-        # Exemplo de proxies gratuitos, utilize proxies mais robustos se necessário.
-        "http": "http://10.10.10.10:8000",
-        "https": "http://10.10.10.10:8000"
-    }
 
     for tentativa in range(tentativas):
         try:
             headers = {"User-Agent": random.choice(user_agents)}
-            response = requests.get(link, headers=headers, timeout=15)  # Adicione proxies=proxies se necessário
+            response = requests.get(link, headers=headers, timeout=15)
             response.raise_for_status()
             # Salvar o conteúdo HTML da página em um arquivo
             with open(arquivo_destino, 'w', encoding='utf-8') as file:
@@ -53,6 +52,7 @@ def baixar_pagina(link, arquivo_destino, tentativas=3):
                 time.sleep(5)  # Espera curta para outros erros
     return None
 
+
 # Função para validar se o conteúdo do arquivo HTML baixado contém as palavras-chave
 def validar_conteudo_do_arquivo(arquivo, palavras_chave):
     try:
@@ -62,6 +62,41 @@ def validar_conteudo_do_arquivo(arquivo, palavras_chave):
     except Exception as e:
         print(f"Erro ao ler ou validar o arquivo {arquivo}: {e}")
         return False
+
+
+# Função para salvar resultados validados em um arquivo
+def salvar_resultados(resultados_validados, nome_arquivo):
+    with open(nome_arquivo, 'wb') as f:
+        pickle.dump(resultados_validados, f)
+
+
+# Função para processar um único resultado
+def processar_resultado(resultado):
+    arquivo = resultado['arquivo']
+    link = resultado['link']
+
+    if " - " not in arquivo:
+        print(f"Arquivo com formato inesperado: {arquivo}")
+        return {"arquivo": arquivo, "link": link, "valido": "Formato inesperado"}
+
+    try:
+        titulo = arquivo.split(" - ")[1].replace(".docx", "")
+        paragrafo = ""  # Ajuste para incluir o parágrafo real, se disponível
+    except IndexError:
+        print(f"Formato do arquivo inesperado: {arquivo}")
+        return {"arquivo": arquivo, "link": link, "valido": "Formato inesperado"}
+
+    palavras_chave = titulo.split()  # Use uma abordagem mais complexa conforme necessário
+    nome_arquivo_html = os.path.join(diretorio_html, f"pagina_{resultados_pesquisa.index(resultado)}.html")
+    arquivo_baixado = baixar_pagina(link, nome_arquivo_html)
+
+    if arquivo_baixado:
+        resultado_validacao = validar_conteudo_do_arquivo(arquivo_baixado, palavras_chave)
+    else:
+        return {"arquivo": arquivo, "link": link, "valido": "Erro ao baixar"}
+
+    return {"arquivo": arquivo, "link": link, "valido": resultado_validacao}
+
 
 # Carregar os resultados do arquivo Excel
 arquivo_resultado_excel = 'resultados_pesquisa_google.xlsx'
@@ -83,65 +118,37 @@ diretorio_html = 'paginas_baixadas'
 if not os.path.exists(diretorio_html):
     os.makedirs(diretorio_html)
 
-# Arquivo para salvar logs de erros detalhados
-arquivo_erros = 'erros_log.txt'
-
-# Validar os links com base nas palavras-chave
+# Processar os resultados em paralelo usando ThreadPoolExecutor
 resultados_validados = []
-for resultado in resultados_pesquisa:
-    arquivo = resultado['arquivo']
-    link = resultado['link']
-
-    # Verifica se o nome do arquivo contém o separador esperado
-    if " - " in arquivo:
+with ThreadPoolExecutor(max_workers=10) as executor:
+    futuros = [executor.submit(processar_resultado, resultado) for resultado in resultados_pesquisa]
+    for futuro in as_completed(futuros):
         try:
-            titulo = arquivo.split(" - ")[1].replace(".docx", "")
-            paragrafo = ""  # Aqui podemos ajustar para incluir o parágrafo real, se disponível
-        except IndexError:
-            print(f"Formato do arquivo inesperado: {arquivo}")
-            erro_formato += 1
-            continue
+            resultado = futuro.result()
+            # Atualizar contadores de forma segura
+            if resultado["valido"] == True:
+                total_validos += 1
+            elif resultado["valido"] == False:
+                total_invalidos += 1
+            elif resultado["valido"] == "Formato inesperado":
+                erro_formato += 1
+            else:
+                total_erros += 1
+                if "404" in resultado["valido"]:
+                    erro_404 += 1
+                elif "403" in resultado["valido"]:
+                    erro_403 += 1
+                elif "429" in resultado["valido"]:
+                    erro_429 += 1
+                elif "timeout" in resultado["valido"].lower():
+                    erro_timeout += 1
+            resultados_validados.append(resultado)
+        except Exception as e:
+            print(f"Erro ao processar resultado: {e}")
 
-        # Lista de palavras-chave a partir do título
-        palavras_chave = titulo.split()  # Use uma abordagem mais complexa conforme necessário
-
-        # Nome do arquivo HTML para salvar o conteúdo da página
-        nome_arquivo_html = os.path.join(diretorio_html, f"pagina_{resultados_pesquisa.index(resultado)}.html")
-
-        # Baixar a página HTML
-        arquivo_baixado = baixar_pagina(link, nome_arquivo_html)
-
-        if arquivo_baixado:
-            # Validar o conteúdo do arquivo HTML baixado
-            resultado_validacao = validar_conteudo_do_arquivo(arquivo_baixado, palavras_chave)
-        else:
-            resultado_validacao = "Erro ao baixar"
-
-        if resultado_validacao == True:
-            resultados_validados.append({"arquivo": arquivo, "link": link, "valido": True})
-            total_validos += 1
-        elif resultado_validacao == False:
-            resultados_validados.append({"arquivo": arquivo, "link": link, "valido": False})
-            total_invalidos += 1
-        else:
-            total_erros += 1
-            # Categoriza erros específicos
-            if "404" in resultado_validacao:
-                erro_404 += 1
-            elif "403" in resultado_validacao:
-                erro_403 += 1
-            elif "429" in resultado_validacao:
-                erro_429 += 1
-            elif "Read timed out" in resultado_validacao or "Max retries exceeded" in resultado_validacao:
-                erro_timeout += 1
-            # Salvar erro detalhado no log
-            with open(arquivo_erros, 'a', encoding='utf-8') as log:
-                log.write(f"Erro ao validar arquivo: {arquivo}\nLink: {link}\nErro: {resultado_validacao}\n\n")
-            resultados_validados.append(
-                {"arquivo": arquivo, "link": link, "valido": "Erro", "erro": resultado_validacao})
-    else:
-        print(f"Arquivo com formato inesperado: {arquivo}")
-        erro_formato += 1
+# Salvando resultados validados
+nome_arquivo_resultados = 'resultados_validados.pkl'
+salvar_resultados(resultados_validados, nome_arquivo_resultados)
 
 # Exibindo os resultados validados
 print("\nResultados Validados:")
@@ -159,8 +166,6 @@ print(f" - Erros 403 (Forbidden): {erro_403}")
 print(f" - Erros 429 (Too Many Requests): {erro_429}")
 print(f" - Erros de Timeout: {erro_timeout}")
 print(f"Total de Arquivos com Formato Inesperado: {erro_formato}")
-
-
 
 # retornou apenas 24 validos
 # import openpyxl
